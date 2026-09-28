@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- 加密空间索引与密码永不进入备份 -->
+    <exclude domain="database" path="arashi.db" />
+    <exclude domain="sharedpref" path="arashi_settings.preferences_pb" />
+</full-backup-content>

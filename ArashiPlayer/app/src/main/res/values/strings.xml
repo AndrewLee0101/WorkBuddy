@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">岚播放器</string>
+    <string name="app_name_en">ArashiPlayer</string>
+    <string name="app_slogan">风起时，替你收藏每一帧声音与画面</string>
+
+    <!-- 首页 -->
+    <string name="home_video">视频</string>
+    <string name="home_music">音乐</string>
+    <string name="home_video_desc">本地高清播放 · 外挂字幕</string>
+    <string name="home_music_desc">无损音乐 · 在线封面歌词</string>
+    <string name="home_vault">加密空间</string>
+    <string name="home_recent">最近播放</string>
+    <string name="home_library">媒体库</string>
+
+    <!-- 音乐 -->
+    <string name="music_library">音乐库</string>
+    <string name="music_songs">歌曲</string>
+    <string name="music_artists">歌手</string>
+    <string name="music_albums">专辑</string>
+    <string name="music_folders">文件夹</string>
+    <string name="music_now_playing">正在播放</string>
+    <string name="music_search_local">搜索本地音乐</string>
+    <string name="music_match_online">在线匹配封面与歌词</string>
+
+    <!-- 视频 -->
+    <string name="video_library">视频库</string>
+    <string name="video_all">全部</string>
+    <string name="video_folders">文件夹</string>
+    <string name="video_sort">排序</string>
+    <string name="video_search">搜索视频</string>
+
+    <!-- 播放器 -->
+    <string name="player_subtitle">字幕</string>
+    <string name="player_subtitle_add">添加外挂字幕</string>
+    <string name="player_subtitle_style">字幕样式</string>
+    <string name="subtitle_color">颜色</string>
+    <string name="subtitle_opacity">透明度</string>
+    <string name="subtitle_position">位置</string>
+    <string name="subtitle_size">大小</string>
+    <string name="player_speed">倍速</string>
+    <string name="player_decoder">解码方式</string>
+    <string name="player_hardware">硬件解码</string>
+    <string name="player_software">软件解码</string>
+    <string name="player_ratio">画面比例</string>
+    <string name="player_brightness">亮度</string>
+    <string name="player_volume">音量</string>
+    <string name="player_rotate">旋转屏幕</string>
+    <string name="player_screenshot">截图</string>
+
+    <!-- 加密空间 -->
+    <string name="vault_title">加密空间</string>
+    <string name="vault_desc">文件仅改名换后缀，不复制、不额外占用空间</string>
+    <string name="vault_unlock">解锁</string>
+    <string name="vault_setup_title">设置加密空间密码</string>
+    <string name="vault_use_pin">数字密码</string>
+    <string name="vault_use_gesture">手势密码</string>
+    <string name="vault_wrong">密码错误，请重试</string>
+    <string name="vault_add_files">添加文件</string>
+    <string name="vault_empty">加密空间是空的</string>
+    <string name="vault_empty_hint">把照片、视频、音乐拖进来，它们会从相册与扫描器中消失</string>
+    <string name="vault_restore">移出加密空间</string>
+    <string name="vault_hint">提示信息</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_appearance">外观</string>
+    <string name="settings_theme">主题模式</string>
+    <string name="settings_theme_follow">跟随系统</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_theme_color">主题色</string>
+    <string name="settings_playback">播放</string>
+    <string name="settings_auto_match">自动匹配在线封面与歌词</string>
+    <string name="settings_subtitle_style">默认字幕样式</string>
+    <string name="settings_gesture">手势控制</string>
+    <string name="settings_security">安全</string>
+    <string name="settings_vault">加密空间</string>
+    <string name="settings_vault_change">修改密码</string>
+    <string name="settings_vault_mode">解锁方式</string>
+    <string name="settings_hide_thumb">隐藏加密文件缩略图</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_contact_author">联系作者</string>
+    <string name="settings_contact_author_sub">小红书 @琪琪</string>
+    <string name="settings_reward_author">赞赏作者</string>
+    <string name="settings_reward_author_sub">请我喝一杯咖啡</string>
+    <string name="settings_check_update">检查更新</string>
+    <string name="settings_version">版本</string>
+    <string name="settings_licenses">开源许可</string>
+
+    <!-- 赞赏页 -->
+    <string name="reward_title">赞赏作者</string>
+    <string name="reward_slogan">您的支持是我坚持的动力</string>
+    <string name="reward_alipay">支付宝</string>
+    <string name="reward_wechat">微信赞赏码</string>
+    <string name="reward_alipay_hint">打开支付宝扫一扫</string>
+    <string name="reward_wechat_hint">长按识别或扫码赞赏</string>
+    <string name="reward_save">保存到相册</string>
+
+    <!-- 作者页 -->
+    <string name="author_title">联系作者</string>
+    <string name="author_open_xhs">打开小红书主页</string>
+    <string name="author_tip">使用中遇到问题、想要新功能，欢迎来小红书找我</string>
+</resources>

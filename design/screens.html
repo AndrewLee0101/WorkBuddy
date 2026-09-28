@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>岚播放器 · 高保真原型</title>
+<style>
+  :root{
+    --ink:#12141C;
+    --ink2:#6B7080;
+    --ink3:#9BA0B0;
+    --bg:#F4F5F9;
+    --card:#FFFFFF;
+    --divider:rgba(0,0,0,.055);
+    --blue:#4F6BFF;
+    --blue-deep:#2F49D1;
+    --violet:#7C5CFF;
+    --cyan:#35D6E8;
+    --grad:linear-gradient(135deg,#5B6BFF 0%,#7C5CFF 52%,#35D6E8 100%);
+    --shadow:0 10px 30px rgba(18,20,44,.07), 0 2px 6px rgba(18,20,44,.04);
+    --shadow-lg:0 18px 46px rgba(18,20,44,.14), 0 3px 10px rgba(18,20,44,.06);
+    --sb:44px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+  /* 393x852 的设计稿，用 zoom:2 渲染成 786x1704 的 2 倍图 */
+  html{zoom:2;margin:0;overflow:hidden}
+  body{width:393px;height:852px;overflow:hidden;margin:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+    background:var(--bg); color:var(--ink);
+  }
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden}
+  .screen.on{display:flex}
+
+  /* ---------- 状态栏 / home 指示条 ---------- */
+  .statusbar{height:var(--sb);display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 26px 6px;font-size:14px;font-weight:600;letter-spacing:.2px;flex:0 0 auto;z-index:9}
+  .statusbar .r{display:flex;align-items:center;gap:5px}
+  .homebar{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
+    width:134px;height:5px;border-radius:3px;background:rgba(0,0,0,.22);z-index:20}
+  .homebar.light{background:rgba(255,255,255,.55)}
+
+  /* ---------- 通用 ---------- */
+  .scroll{flex:1;overflow:hidden;display:flex;flex-direction:column}
+  .px{padding-left:20px;padding-right:20px}
+  .row{display:flex;align-items:center}
+  .grow{flex:1;min-width:0}
+  .ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sec-title{font-size:13px;font-weight:600;color:var(--ink3);letter-spacing:.3px;margin:18px 0 9px 4px}
+  .big-title{font-size:33px;font-weight:800;letter-spacing:-1.1px}
+
+  /* ---------- 首页 ---------- */
+  .home-head{padding:6px 20px 0;position:relative;z-index:3}
+  .home-head h1{font-size:27px;font-weight:800;letter-spacing:-.8px}
+  .home-head p{font-size:11.5px;color:var(--ink3);margin-top:5px;letter-spacing:.1px}
+  .logo-chip{width:46px;height:46px;border-radius:15px;background:var(--grad);color:#fff;
+    font-size:23px;font-weight:800;display:flex;align-items:center;justify-content:center;
+    letter-spacing:-1px;box-shadow:0 10px 24px rgba(91,107,255,.34);flex:0 0 auto}
+
+  .hero{display:flex;gap:13px;padding:18px 20px 0;position:relative;z-index:3}
+  .hero-card{flex:1;height:172px;border-radius:25px;padding:16px;color:#fff;position:relative;
+    overflow:hidden;box-shadow:var(--shadow-lg);display:flex;flex-direction:column}
+  .hero-card.v{background:linear-gradient(150deg,#3A49D6 0%,#6E52F0 58%,#8B6BFF 100%)}
+  .hero-card.m{background:linear-gradient(150deg,#7C5CFF 0%,#5AA8F5 55%,#24C6DC 100%)}
+  .hero-card::after{content:"";position:absolute;width:190px;height:190px;border-radius:50%;
+    right:-72px;top:-72px;background:radial-gradient(circle,rgba(255,255,255,.34),rgba(255,255,255,0) 68%)}
+  .hero-card::before{content:"";position:absolute;left:0;right:0;bottom:0;height:60%;
+    background:linear-gradient(to top,rgba(0,0,0,.20),rgba(0,0,0,0))}
+  .hc-icon{width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.20);
+    border:1px solid rgba(255,255,255,.34);display:flex;align-items:center;justify-content:center;
+    position:relative;z-index:2;backdrop-filter:blur(6px)}
+  .hc-name{font-size:24px;font-weight:800;letter-spacing:-.5px;margin-top:auto;position:relative;z-index:2}
+  .hc-desc{font-size:10.5px;opacity:.86;margin-top:4px;letter-spacing:.1px;position:relative;z-index:2}
+  .hc-count{font-size:10.5px;margin-top:9px;position:relative;z-index:2;
+    display:inline-flex;align-self:flex-start;padding:3px 9px;border-radius:20px;
+    background:rgba(255,255,255,.20);border:1px solid rgba(255,255,255,.24);font-weight:600}
+
+  .quick{display:flex;gap:11px;padding:0 20px}
+  .q-card{flex:1;background:var(--card);border-radius:19px;padding:13px 11px;
+    box-shadow:var(--shadow);border:1px solid var(--divider);display:flex;flex-direction:column;gap:9px}
+  .q-ico{width:31px;height:31px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+  .q-label{font-size:12.5px;font-weight:650;letter-spacing:-.1px}
+  .q-sub{font-size:10px;color:var(--ink3);margin-top:2px}
+
+  .h-scroll{display:flex;gap:11px;padding:0 20px;overflow:hidden}
+  .recent-card{width:118px;flex:0 0 auto}
+  .thumb{width:118px;height:64px;border-radius:14px;position:relative;overflow:hidden;
+    box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center}
+  .thumb .dur{position:absolute;right:6px;bottom:6px;font-size:9.5px;color:#fff;
+    background:rgba(0,0,0,.55);padding:2px 5px;border-radius:5px;font-weight:600}
+  .thumb .play{position:absolute;width:30px;height:30px;border-radius:50%;
+    background:rgba(255,255,255,.86);display:flex;align-items:center;justify-content:center}
+  .recent-name{font-size:11.5px;font-weight:600;margin-top:7px}
+  .recent-meta{font-size:10px;color:var(--ink3);margin-top:2px}
+
+  /* ---------- 迷你播放条 ---------- */
+  .mini{position:absolute;left:14px;right:14px;bottom:22px;height:60px;border-radius:20px;
+    background:rgba(255,255,255,.82);backdrop-filter:blur(22px) saturate(180%);
+    border:1px solid rgba(0,0,0,.05);box-shadow:0 12px 34px rgba(18,20,44,.16);
+    display:flex;align-items:center;gap:11px;padding:0 12px;z-index:15}
+  .mini-cover{width:40px;height:40px;border-radius:12px;flex:0 0 auto}
+  .mini-t{font-size:12.5px;font-weight:650}
+  .mini-s{font-size:10px;color:var(--ink3);margin-top:2px}
+
+  /* ---------- 列表 ---------- */
+  .lrow{display:flex;align-items:center;gap:12px;padding:8px 20px}
+  .lrow .cov{width:52px;height:52px;border-radius:12px;flex:0 0 auto;position:relative;overflow:hidden}
+  .lrow .t{font-size:14.5px;font-weight:600;letter-spacing:-.15px}
+  .lrow .s{font-size:11.5px;color:var(--ink3);margin-top:3px}
+  .lrow .d{font-size:11.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
+  .seg{display:flex;gap:4px;background:rgba(120,126,150,.11);border-radius:13px;padding:3px;margin:0 20px}
+  .seg div{flex:1;text-align:center;font-size:12.5px;font-weight:600;color:var(--ink2);
+    padding:7px 0;border-radius:10px;letter-spacing:-.1px}
+  .seg div.on{background:#fff;color:var(--ink);box-shadow:0 2px 7px rgba(18,20,44,.11)}
+  .chips{display:flex;gap:8px;padding:0 20px;overflow:hidden}
+  .chip{flex:0 0 auto;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;
+    background:rgba(120,126,150,.11);color:var(--ink2);letter-spacing:-.1px}
+  .chip.on{background:linear-gradient(135deg,#5B6BFF,#7C5CFF);color:#fff;
+    box-shadow:0 6px 16px rgba(91,107,255,.32)}
+
+  /* ---------- 正在播放 ---------- */
+  .np{background:#07080E;color:#fff}
+  .np .statusbar{color:#fff}
+  .np-bg{position:absolute;inset:-60px;background:
+      radial-gradient(circle at 30% 18%,rgba(124,92,255,.55),transparent 55%),
+      radial-gradient(circle at 76% 40%,rgba(53,214,232,.42),transparent 55%),
+      radial-gradient(circle at 50% 90%,rgba(91,107,255,.42),transparent 60%);
+    filter:blur(46px);opacity:.85}
+  .np-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,8,14,.42),rgba(7,8,14,.86))}
+  .np-handle{width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.30);margin:14px auto 0}
+  .np-tag{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.55);font-weight:600;text-align:center;margin-top:12px}
+  .np-cover{width:321px;height:321px;border-radius:24px;margin:22px auto 0;position:relative;
+    box-shadow:0 30px 70px rgba(0,0,0,.62);overflow:hidden;
+    background:linear-gradient(140deg,#3A49D6,#7C5CFF 48%,#24C6DC)}
+  .np-cover::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.35),rgba(255,255,255,0) 60%)}
+  .np-cover .glyph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:96px;font-weight:800;color:rgba(255,255,255,.92);letter-spacing:-4px;
+    text-shadow:0 6px 26px rgba(0,0,0,.28)}
+  .np-title{font-size:21px;font-weight:800;letter-spacing:-.5px;text-align:center;margin-top:24px}
+  .np-artist{font-size:13.5px;color:rgba(255,255,255,.58);text-align:center;margin-top:7px}
+  .np-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:26px 30px 0;position:relative}
+  .np-bar i{position:absolute;left:0;top:0;bottom:0;width:38%;border-radius:2px;
+    background:linear-gradient(90deg,#5B6BFF,#7C5CFF,#35D6E8)}
+  .np-bar b{position:absolute;left:38%;top:50%;width:12px;height:12px;border-radius:50%;
+    background:#fff;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+  .np-time{display:flex;justify-content:space-between;margin:9px 30px 0;font-size:10.5px;
+    color:rgba(255,255,255,.45);font-variant-numeric:tabular-nums}
+  .np-ctrl{display:flex;align-items:center;justify-content:center;gap:34px;margin-top:22px}
+  .np-play{width:62px;height:62px;border-radius:50%;background:#fff;display:flex;
+    align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+  .np-tools{display:flex;justify-content:space-between;padding:24px 42px 0;opacity:.78}
+  .np-lyric{margin:22px 30px 0;padding-top:18px;border-top:1px solid rgba(255,255,255,.10);
+    text-align:center}
+  .np-lyric .cur{font-size:14px;font-weight:600;color:rgba(255,255,255,.95);line-height:1.6}
+  .np-lyric .nxt{font-size:12.5px;color:rgba(255,255,255,.34);margin-top:9px;line-height:1.6}
+
+  /* ---------- 设置 ---------- */
+  .group{background:var(--card);border-radius:18px;margin:0 16px;overflow:hidden;
+    box-shadow:var(--shadow);border:1px solid var(--divider)}
+  .srow{display:flex;align-items:center;gap:12px;padding:12px 15px}
+  .srow+.srow{border-top:.5px solid var(--divider)}
+  .sico{width:29px;height:29px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .st{font-size:14.5px;font-weight:600;letter-spacing:-.15px}
+  .ss{font-size:11px;color:var(--ink3);margin-top:3px}
+  .sw{width:47px;height:28px;border-radius:15px;background:#D8DBE5;position:relative;flex:0 0 auto}
+  .sw.on{background:linear-gradient(135deg,#5B6BFF,#7C5CFF)}
+  .sw b{position:absolute;top:2.5px;left:2.5px;width:23px;height:23px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2);transition:.2s}
+  .sw.on b{left:21.5px}
+  .dots{display:flex;gap:9px;padding:4px 15px 15px}
+  .dot{width:26px;height:26px;border-radius:50%;position:relative;flex:0 0 auto}
+  .dot.on::after{content:"";position:absolute;inset:-4px;border-radius:50%;
+    border:2px solid rgba(91,107,255,.55)}
+
+  /* ---------- 加密空间 ---------- */
+  .vault-lock{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:60px}
+  .vault-badge{width:88px;height:88px;border-radius:28px;background:var(--grad);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 18px 40px rgba(91,107,255,.42)}
+  .vault-badge span{font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px}
+  .vault-title{font-size:22px;font-weight:800;margin-top:22px;letter-spacing:-.4px}
+  .vault-sub{font-size:12.5px;color:var(--ink3);margin-top:8px}
+  .pin-dots{display:flex;gap:16px;justify-content:center;margin-top:30px}
+  .pin-dots i{width:13px;height:13px;border-radius:50%;border:2px solid rgba(120,126,150,.42)}
+  .pin-dots i.f{background:var(--blue);border-color:var(--blue);box-shadow:0 0 0 4px rgba(79,107,255,.14)}
+  .pad{display:grid;grid-template-columns:repeat(3,76px);gap:14px;justify-content:center;margin-top:30px}
+  .key{width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.86);border:.5px solid var(--divider);
+    display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:500;
+    box-shadow:0 3px 10px rgba(18,20,44,.06)}
+  .key.ghost{background:transparent;border:none;box-shadow:none}
+  .vault-hint{display:flex;gap:9px;align-items:center;margin:0 16px 14px;padding:11px 14px;
+    border-radius:14px;background:rgba(79,107,255,.07);border:1px solid rgba(79,107,255,.13)}
+  .vault-hint p{font-size:11px;color:#43508F;line-height:1.45}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 20px}
+  .vcell{aspect-ratio:1;border-radius:14px;position:relative;overflow:hidden;box-shadow:var(--shadow);
+    display:flex;align-items:center;justify-content:center}
+  .vcell .tag{position:absolute;left:6px;top:6px;font-size:8.5px;font-weight:700;color:#fff;
+    background:rgba(0,0,0,.45);padding:2px 5px;border-radius:4px;letter-spacing:.3px}
+  .fab{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;height:50px;padding:0 26px;
+    border-radius:26px;background:var(--grad);color:#fff;display:flex;align-items:center;gap:9px;
+    font-size:14.5px;font-weight:700;box-shadow:0 14px 34px rgba(91,107,255,.46);z-index:15}
+
+  /* ---------- 头像 / 赞赏 ---------- */
+  .xhs{width:26px;height:26px;border-radius:8px;background:#FF2442;color:#fff;font-size:8px;
+    font-weight:800;display:flex;align-items:center;justify-content:center;letter-spacing:-.2px}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .qr-card{background:var(--card);border-radius:20px;margin:0 20px;padding:16px;box-shadow:var(--shadow);
+    border:1px solid var(--divider)}
+  .qr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .qr-head .t{font-size:15px;font-weight:700}
+  .qr-head .s{font-size:10.5px;color:var(--ink3);margin-top:3px}
+  .qr-img{width:100%;border-radius:14px;display:block;background:#fff}
+  .qr-img.sq{width:206px;margin:0 auto;box-shadow:0 6px 20px rgba(18,20,44,.10)}
+  .save{font-size:10.5px;font-weight:600;color:#fff;background:rgba(79,107,255,.92);
+    padding:5px 11px;border-radius:20px}
+</style>
+</head>
+<body>
+
+<!-- ==================== 图标 ==================== -->
+<div class="screen" id="icon" style="align-items:center;justify-content:center;background:#E9EBF3">
+  <svg width="300" height="300" viewBox="0 0 512 512">
+    <defs>
+      <linearGradient id="ibg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#2B2E7A"/><stop offset=".45" stop-color="#6A4CF6"/><stop offset="1" stop-color="#24C6DC"/>
+      </linearGradient>
+      <radialGradient id="iglow" cx=".5" cy=".44" r=".58">
+        <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="imist" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fff" stop-opacity=".98"/><stop offset=".55" stop-color="#fff" stop-opacity=".72"/><stop offset="1" stop-color="#fff" stop-opacity=".42"/>
+      </linearGradient>
+    </defs>
+    <rect width="512" height="512" rx="115" fill="url(#ibg)"/>
+    <rect width="512" height="512" rx="115" fill="url(#iglow)"/>
+    <rect x="1.5" y="1.5" width="509" height="509" rx="113.5" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="3"/>
+    <rect x="116.1" y="120.9" width="111.5" height="85.3" rx="26.1" fill="#fff" fill-opacity=".20" stroke="#fff" stroke-opacity=".92" stroke-width="12.3"/>
+    <path d="M159.3 143.2 L191.5 163.6 L159.3 184.0 Z" fill="#fff"/>
+    <ellipse cx="312.9" cy="189.6" rx="12.8" ry="10.9" fill="#fff"/>
+    <ellipse cx="369.8" cy="177.3" rx="12.8" ry="10.9" fill="#fff"/>
+    <rect x="322.8" y="127.0" width="10.4" height="62.6" fill="#fff"/>
+    <rect x="379.7" y="114.7" width="10.4" height="62.6" fill="#fff"/>
+    <path d="M322.8 126.1 L390.1 114.3 L390.1 134.2 L322.8 146.0 Z" fill="#fff"/>
+    <g fill="none" stroke="url(#imist)" stroke-width="16.1" stroke-linecap="round">
+      <path d="M118.5 279.7 C184.9 241.8 244.2 260.7 289.2 281.6 C336.6 303.4 376.9 298.7 398.2 277.8"/>
+      <path d="M111.4 324.3 C180.2 286.4 251.3 306.3 298.7 327.1 C343.7 347.0 376.9 342.3 398.2 322.4"/>
+      <path d="M139.9 367.9 C206.2 330.9 263.1 349.9 308.2 369.8 C348.4 387.8 376.9 383.1 393.5 367.0"/>
+    </g>
+  </svg>
+</div>
+
+<!-- ==================== 01 首页 ==================== -->
+<div class="screen" id="home">
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#12141C"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#12141C"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#12141C"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#9BA0B0"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 10.2 9.9 8.1a2.7 2.7 0 0 0-3.8 0L8 10.2Zm0-4.1c1.5 0 2.9.6 4 1.6l1.4-1.5A8 8 0 0 0 8 3.9a8 8 0 0 0-5.4 2.3l1.4 1.5a5.8 5.8 0 0 1 4-1.6Z" fill="#12141C"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="#12141C" stroke-opacity=".38"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2" fill="#12141C"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4Z" fill="#12141C" fill-opacity=".4"/></svg>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <div class="home-head">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div class="row" style="gap:12px">
+          <div class="logo-chip">岚</div>
+          <div>
+            <h1>岚播放器</h1>
+            <p>风起时，替你收藏每一帧声音与画面</p>
+          </div>
+        </div>
+        <div style="width:36px;height:36px;border-radius:12px;background:#fff;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7080" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64h.09A1.7 1.7 0 0 0 10.64 3V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1Z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-card v">
+        <div class="hc-icon">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="2.2" y="4.6" width="19.6" height="14.8" rx="4.2" stroke="#fff" stroke-width="1.9"/><path d="M10 9.4 15.6 12 10 14.6Z" fill="#fff"/></svg>
+        </div>
+        <div class="hc-name">视频</div>
+        <div class="hc-desc">本地高清播放 · 外挂字幕</div>
+        <div class="hc-count">128 个视频</div>
+      </div>
+      <div class="hero-card m">
+        <div class="hc-icon" style="align-self:flex-end">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="7.2" cy="17.4" r="2.9" fill="#fff"/><circle cx="17.6" cy="14.8" r="2.9" fill="#fff"/><rect x="9" y="5" width="2" height="12.4" fill="#fff"/><rect x="19.4" y="2.4" width="2" height="12.4" fill="#fff"/><path d="M9 4.6 21.4 2.4v4.4L9 9Z" fill="#fff"/></svg>
+        </div>
+        <div class="hc-name">音乐</div>
+        <div class="hc-desc">无损音质 · 在线封面歌词</div>
+        <div class="hc-count">416 首歌</div>
+      </div>
+    </div>
+
+    <div class="sec-title px" style="margin-left:20px">媒体库</div>
+    <div class="quick">
+      <div class="q-card">
+        <div class="q-ico" style="background:rgba(79,107,255,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6BFF" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.4V12l3.2 2"/></svg>
+        </div>
+        <div><div class="q-label">最近播放</div><div class="q-sub">继续上次</div></div>
+      </div>
+      <div class="q-card">
+        <div class="q-ico" style="background:rgba(255,107,138,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF6B8A"><path d="M12 20.4 4.6 13.3a4.7 4.7 0 0 1 6.6-6.7l.8.8.8-.8a4.7 4.7 0 0 1 6.6 6.7Z"/></svg>
+        </div>
+        <div><div class="q-label">我的收藏</div><div class="q-sub">36 首</div></div>
+      </div>
+      <div class="q-card">
+        <div class="q-ico" style="background:rgba(124,92,255,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C5CFF" stroke-width="2" stroke-linejoin="round"><rect x="4" y="10.4" width="16" height="10" rx="2.6"/><path d="M8 10.4V7.6a4 4 0 0 1 8 0v2.8"/></svg>
+        </div>
+        <div><div class="q-label">加密空间</div><div class="q-sub">87 个文件</div></div>
+      </div>
+    </div>
+
+    <div class="sec-title px" style="margin-left:20px">最近播放</div>
+    <div class="h-scroll">
+      <div class="recent-card">
+        <div class="thumb" style="background:linear-gradient(140deg,#3A49D6,#7C5CFF 55%,#24C6DC)">
+          <div class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M1.4.9 10 6 1.4 11.1Z" fill="#4F6BFF"/></svg></div>
+          <div class="dur">1:24:06</div>
+        </div>
+        <div class="recent-name">海上钢琴师</div>
+        <div class="recent-meta">MKV · 2.1 GB</div>
+      </div>
+      <div class="recent-card">
+        <div class="thumb" style="background:linear-gradient(140deg,#7C5CFF,#5AA8F5)">
+          <div class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M1.4.9 10 6 1.4 11.1Z" fill="#7C5CFF"/></svg></div>
+          <div class="dur">4:33</div>
+        </div>
+        <div class="recent-name">起风了</div>
+        <div class="recent-meta">FLAC · 42 MB</div>
+      </div>
+      <div class="recent-card">
+        <div class="thumb" style="background:linear-gradient(140deg,#24C6DC,#5B6BFF)">
+          <div class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M1.4.9 10 6 1.4 11.1Z" fill="#35D6E8"/></svg></div>
+          <div class="dur">48:12</div>
+        </div>
+        <div class="recent-name">天气之子 1080P</div>
+        <div class="recent-meta">MP4 · 1.4 GB</div>
+      </div>
+    </div>
+
+    <div class="sec-title px" style="margin-left:20px">播放列表</div>
+    <div class="group" style="margin:0 20px 16px">
+      <div class="srow">
+        <div class="sico" style="background:rgba(255,107,138,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF6B8A"><path d="M12 20.4 4.6 13.3a4.7 4.7 0 0 1 6.6-6.7l.8.8.8-.8a4.7 4.7 0 0 1 6.6 6.7Z"/></svg>
+        </div>
+        <div class="grow"><div class="st">我喜欢的音乐</div><div class="ss">36 首 · 已同步</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.4 5.6 6.4 6.4-6.4 6.4"/></svg>
+      </div>
+      <div class="srow">
+        <div class="sico" style="background:rgba(79,107,255,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6BFF" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h10M4 12h16M4 17h10"/></svg>
+        </div>
+        <div class="grow"><div class="st">本地全部音乐</div><div class="ss">416 首 · 含 4 张无损专辑</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.4 5.6 6.4 6.4-6.4 6.4"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="mini">
+    <div class="mini-cover" style="background:linear-gradient(140deg,#3A49D6,#7C5CFF 50%,#24C6DC)"></div>
+    <div class="grow">
+      <div class="mini-t ell">海上钢琴师 · 原声</div>
+      <div class="mini-s ell">Ennio Morricone</div>
+    </div>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#12141C"><path d="M12 4.6 5 10.6v8.8h4.6v-5.2h4.8v5.2H19v-8.8Z"/></svg>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="#12141C"><rect x="6.6" y="5" width="3.6" height="14" rx="1.6"/><rect x="13.8" y="5" width="3.6" height="14" rx="1.6"/></svg>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#12141C"><path d="M6 5.6 19 12 6 18.4Z"/></svg>
+  </div>
+  <div class="homebar"></div>
+</div>
+
+<!-- ==================== 02 音乐库 ==================== -->
+<div class="screen" id="music">
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#12141C"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#12141C"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#12141C"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#9BA0B0"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 10.2 9.9 8.1a2.7 2.7 0 0 0-3.8 0L8 10.2Zm0-4.1c1.5 0 2.9.6 4 1.6l1.4-1.5A8 8 0 0 0 8 3.9a8 8 0 0 0-5.4 2.3l1.4 1.5a5.8 5.8 0 0 1 4-1.6Z" fill="#12141C"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="#12141C" stroke-opacity=".38"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2" fill="#12141C"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4Z" fill="#12141C" fill-opacity=".4"/></svg>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="px row" style="justify-content:space-between;padding:8px 20px 16px">
+      <div class="big-title">音乐库</div>
+      <div class="row" style="gap:14px;color:#6B7080">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7080" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="m16 16 4.4 4.4"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7080" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="1.4" fill="#6B7080" stroke="none"/><circle cx="6" cy="12" r="1.4" fill="#6B7080" stroke="none"/><circle cx="18" cy="12" r="1.4" fill="#6B7080" stroke="none"/></svg>
+      </div>
+    </div>
+    <div class="seg"><div class="on">歌曲</div><div>歌手</div><div>专辑</div><div>文件夹</div></div>
+
+    <div style="margin-top:14px">
+      <div class="lrow">
+        <div class="cov" style="background:linear-gradient(140deg,#3A49D6,#7C5CFF 55%,#24C6DC)"></div>
+        <div class="grow"><div class="t ell">起风了</div><div class="s ell">买辣椒也用券 · 鱼仔</div></div>
+        <div class="d">5:25</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="6" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="18" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/></svg>
+      </div>
+      <div class="lrow">
+        <div class="cov" style="background:linear-gradient(140deg,#7C5CFF,#5AA8F5)"></div>
+        <div class="grow"><div class="t ell">海上钢琴师</div><div class="s ell">Ennio Morricone · 电影原声</div></div>
+        <div class="d">4:33</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="6" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="18" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/></svg>
+      </div>
+      <div class="lrow">
+        <div class="cov" style="background:linear-gradient(140deg,#24C6DC,#5B6BFF)"></div>
+        <div class="grow"><div class="t ell">花海</div><div class="s ell">周杰伦 · 魔杰座</div></div>
+        <div class="d">4:07</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="6" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="18" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/></svg>
+      </div>
+      <div class="lrow">
+        <div class="cov" style="background:linear-gradient(140deg,#FF6B8A,#7C5CFF)"></div>
+        <div class="grow"><div class="t ell">晴天</div><div class="s ell">周杰伦 · 叶惠美</div></div>
+        <div class="d">4:29</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="6" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="18" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/></svg>
+      </div>
+      <div class="lrow">
+        <div class="cov" style="background:linear-gradient(140deg,#3FBF8F,#35D6E8)"></div>
+        <div class="grow"><div class="t ell">夜空中最亮的星</div><div class="s ell">逃跑计划 · 世界</div></div>
+        <div class="d">4:12</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="6" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="18" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/></svg>
+      </div>
+      <div class="lrow">
+        <div class="cov" style="background:linear-gradient(140deg,#FFA53D,#FF6B8A)"></div>
+        <div class="grow"><div class="t ell">晴天娃娃</div><div class="s ell">吴青峰 · 冊葉一：一與一</div></div>
+        <div class="d">3:58</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="6" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/><circle cx="18" cy="12" r="1.2" fill="#C3C7D2" stroke="none"/></svg>
+      </div>
+      <div class="lrow">
+        <div class="cov" style="background:linear-gradient(140deg,#5B6BFF,#35D6E8)"></div>
+        <div class="grow"><div class="t ell">风从海面吹过来</div><div class="s ell">好妹妹 · 实名制</div></div>
+        <div class="d">4:44</div>
+      </div>
+      <div class="lrow">
+        <div class="cov" style="background:linear-gradient(140deg,#B98CFF,#5B6BFF)"></div>
+        <div class="grow"><div class="t ell">漠河舞厅</div><div class="s ell">柳爽 · 1st.星球</div></div>
+        <div class="d">4:47</div>
+      </div>
+      <div class="lrow">
+        <div class="cov" style="background:linear-gradient(140deg,#FFA53D,#3FBF8F)"></div>
+        <div class="grow"><div class="t ell">如果当时</div><div class="s ell">许嵩 · 自定义</div></div>
+        <div class="d">4:14</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mini">
+    <div class="mini-cover" style="background:linear-gradient(140deg,#3A49D6,#7C5CFF 50%,#24C6DC)"></div>
+    <div class="grow">
+      <div class="mini-t ell">起风了</div>
+      <div class="mini-s ell">买辣椒也用券</div>
+    </div>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#12141C"><rect x="6.6" y="5" width="3.6" height="14" rx="1.7"/><rect x="13.8" y="5" width="3.6" height="14" rx="1.7"/></svg>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#12141C"><path d="M6.4 5.6 17.4 12 6.4 18.4Z"/><rect x="17.6" y="5.6" width="2.2" height="12.8" rx="1.1"/></svg>
+  </div>
+  <div class="homebar"></div>
+</div>
+
+<!-- ==================== 03 正在播放 ==================== -->
+<div class="screen np" id="playing">
+  <div class="np-bg"></div>
+  <div class="np-veil"></div>
+  <div class="statusbar" style="position:relative;z-index:3">
+    <span>9:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#fff"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#fff"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#fff"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#ffffff70"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 10.2 9.9 8.1a2.7 2.7 0 0 0-3.8 0L8 10.2Zm0-4.1c1.5 0 2.9.6 4 1.6l1.4-1.5A8 8 0 0 0 8 3.9a8 8 0 0 0-5.4 2.3l1.4 1.5a5.8 5.8 0 0 1 4-1.6Z" fill="#fff"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="#ffffff60"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2" fill="#fff"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4Z" fill="#ffffff66"/></svg>
+    </div>
+  </div>
+  <div style="position:relative;z-index:3;flex:1;display:flex;flex-direction:column">
+    <div class="np-handle"></div>
+    <div class="np-tag">正在播放</div>
+    <div class="np-cover"><div class="glyph">岚</div></div>
+    <div class="np-title">起风了</div>
+    <div class="np-artist">买辣椒也用券 · 鱼仔</div>
+
+    <div class="np-bar"><i></i><b></b></div>
+    <div class="np-time"><span>2:04</span><span>5:25</span></div>
+
+    <div class="np-ctrl">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.66)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.4 3.4h4.8v4.8M20.6 3.8 3.4 20.6M16.4 20.6h4.8v-4.8M14.6 15.4l6 6M3.4 3.4l6 6"/></svg>
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M6.4 5.6 18 12 6.4 18.4Z"/><rect x="4.2" y="5.6" width="2.1" height="12.8" rx="1" fill="#fff"/></svg>
+      <div class="np-play"><svg width="22" height="22" viewBox="0 0 24 24" fill="#0A0B12"><rect x="7" y="5" width="3.6" height="14" rx="1.8"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.8"/></svg></div>
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M17.6 5.6 6 12l11.6 6.4Z"/><rect x="17.7" y="5.6" width="2.1" height="12.8" rx="1" fill="#fff"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.66)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.4 3.4 21.4 7.4 17.4 11.4M3.4 12.4v-1.2a3.8 3.8 0 0 1 3.8-3.8h13.8M6.6 20.6 2.6 16.6 6.6 12.6M20.6 11.6v1.2a3.8 3.8 0 0 1-3.8 3.8H3"/></svg>
+    </div>
+
+    <div class="np-tools">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13.6 16.4 9.2"/><circle cx="12" cy="13.6" r="8.2"/><path d="M12 5.4v2.2M12 19.6v-2.2M17.8 7.8l-1.6 1.6M7.8 7.8l1.6 1.6"/></svg>
+      <span style="font-size:13px;font-weight:700;color:#fff">1.0x</span>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h10M4 12h16M4 17h10"/></svg>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.6 9H3.4v6h3.2L11 19Z"/><path d="M15.4 9.4a3.6 3.6 0 0 1 0 5.2"/><path d="M18 7a7 7 0 0 1 0 10"/></svg>
+    </div>
+
+    <div class="np-lyric">
+      <div class="cur">我曾将青春翻涌成她</div>
+      <div class="nxt">也曾指尖弹出盛夏</div>
+    </div>
+  </div>
+  <div class="homebar light"></div>
+</div>
+
+<!-- ==================== 04 视频库 ==================== -->
+<div class="screen" id="video">
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#12141C"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#12141C"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#12141C"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#9BA0B0"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 10.2 9.9 8.1a2.7 2.7 0 0 0-3.8 0L8 10.2Zm0-4.1c1.5 0 2.9.6 4 1.6l1.4-1.5A8 8 0 0 0 8 3.9a8 8 0 0 0-5.4 2.3l1.4 1.5a5.8 5.8 0 0 1 4-1.6Z" fill="#12141C"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="#12141C" stroke-opacity=".38"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2" fill="#12141C"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4Z" fill="#12141C" fill-opacity=".4"/></svg>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="px row" style="justify-content:space-between;padding:8px 20px 14px">
+      <div class="big-title">视频库</div>
+      <div class="row" style="gap:14px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7080" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="m16 16 4.4 4.4"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7080" stroke-width="2"><rect x="3.4" y="3.4" width="7.2" height="7.2" rx="2"/><rect x="13.4" y="3.4" width="7.2" height="7.2" rx="2"/><rect x="3.4" y="13.4" width="7.2" height="7.2" rx="2"/><rect x="13.4" y="13.4" width="7.2" height="7.2" rx="2"/></svg>
+      </div>
+    </div>
+    <div class="chips">
+      <div class="chip on">全部</div><div class="chip">Movies</div><div class="chip">Download</div><div class="chip">Rec</div>
+    </div>
+
+    <div class="grid3" style="grid-template-columns:repeat(2,1fr);gap:13px;margin-top:16px;padding:0 20px">
+      <div>
+        <div style="aspect-ratio:16/9;border-radius:14px;background:linear-gradient(140deg,#3A49D6,#7C5CFF 55%,#24C6DC);position:relative;box-shadow:var(--shadow);overflow:hidden">
+          <div class="play" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.86);display:flex;align-items:center;justify-content:center">
+            <svg width="11" height="12" viewBox="0 0 11 12"><path d="M1.4.9 10 6 1.4 11.1Z" fill="#4F6BFF"/></svg>
+          </div>
+          <div class="dur" style="position:absolute;right:6px;bottom:6px;font-size:9.5px;color:#fff;background:rgba(0,0,0,.55);padding:2px 5px;border-radius:5px;font-weight:600">1:24:06</div>
+        </div>
+        <div class="t ell" style="font-size:12.5px;font-weight:600;margin-top:8px">海上钢琴师</div>
+        <div class="s ell" style="font-size:10.5px;color:var(--ink3);margin-top:3px">1080P · 2.10 GB</div>
+      </div>
+      <div>
+        <div style="aspect-ratio:16/9;border-radius:14px;background:linear-gradient(140deg,#24C6DC,#5B6BFF);position:relative;box-shadow:var(--shadow)"></div>
+        <div class="t ell" style="font-size:12.5px;font-weight:600;margin-top:8px">天气之子</div>
+        <div class="s ell" style="font-size:10.5px;color:var(--ink3);margin-top:3px">1080P · 1.42 GB</div>
+      </div>
+      <div>
+        <div style="aspect-ratio:16/9;border-radius:14px;background:linear-gradient(140deg,#7C5CFF,#FF6B8A);position:relative;box-shadow:var(--shadow)"></div>
+        <div class="t ell" style="font-size:12.5px;font-weight:600;margin-top:8px">你的名字。</div>
+        <div class="s ell" style="font-size:10.5px;color:var(--ink3);margin-top:3px">4K · 5.68 GB</div>
+      </div>
+      <div>
+        <div style="aspect-ratio:16/9;border-radius:14px;background:linear-gradient(140deg,#3FBF8F,#35D6E8);position:relative;box-shadow:var(--shadow)"></div>
+        <div class="t ell" style="font-size:12.5px;font-weight:600;margin-top:8px">千与千寻</div>
+        <div class="s ell" style="font-size:10.5px;color:var(--ink3);margin-top:3px">720P · 986 MB</div>
+      </div>
+      <div>
+        <div style="aspect-ratio:16/9;border-radius:14px;background:linear-gradient(140deg,#FFA53D,#FF6B8A);position:relative;box-shadow:var(--shadow)"></div>
+        <div class="t ell" style="font-size:12.5px;font-weight:600;margin-top:8px">秒速五厘米</div>
+        <div class="s ell" style="font-size:10.5px;color:var(--ink3);margin-top:3px">1080P · 1.10 GB</div>
+      </div>
+      <div>
+        <div style="aspect-ratio:16/9;border-radius:14px;background:linear-gradient(140deg,#5B6BFF,#3FBF8F);position:relative;box-shadow:var(--shadow)"></div>
+        <div class="t ell" style="font-size:12.5px;font-weight:600;margin-top:8px">言叶之庭</div>
+        <div class="s ell" style="font-size:10.5px;color:var(--ink3);margin-top:3px">1080P · 742 MB</div>
+      </div>
+      <div>
+        <div style="aspect-ratio:16/9;border-radius:14px;background:linear-gradient(140deg,#7C5CFF,#24C6DC);position:relative;box-shadow:var(--shadow)"></div>
+        <div class="t ell" style="font-size:12.5px;font-weight:600;margin-top:8px">声之形</div>
+        <div class="s ell" style="font-size:10.5px;color:var(--ink3);margin-top:3px">1080P · 1.28 GB</div>
+      </div>
+      <div>
+        <div style="aspect-ratio:16/9;border-radius:14px;background:linear-gradient(140deg,#FF6B8A,#FFA53D);position:relative;box-shadow:var(--shadow)"></div>
+        <div class="t ell" style="font-size:12.5px;font-weight:600;margin-top:8px">萤火之森</div>
+        <div class="s ell" style="font-size:10.5px;color:var(--ink3);margin-top:3px">720P · 468 MB</div>
+      </div>
+    </div>
+  </div>
+  <div class="homebar"></div>
+</div>
+
+<!-- ==================== 05 加密空间 · 解锁 ==================== -->
+<div class="screen" id="vault">
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#12141C"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#12141C"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#12141C"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#9BA0B0"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 10.2 9.9 8.1a2.7 2.7 0 0 0-3.8 0L8 10.2Zm0-4.1c1.5 0 2.9.6 4 1.6l1.4-1.5A8 8 0 0 0 8 3.9a8 8 0 0 0-5.4 2.3l1.4 1.5a5.8 5.8 0 0 1 4-1.6Z" fill="#12141C"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="#12141C" stroke-opacity=".38"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2" fill="#12141C"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4Z" fill="#12141C" fill-opacity=".4"/></svg>
+    </div>
+  </div>
+  <div class="vault-lock">
+    <div class="vault-badge"><span>岚</span></div>
+    <div class="vault-title">加密空间</div>
+    <div class="vault-sub">输入密码以继续 · 提示：生日后四位</div>
+    <div class="pin-dots"><i class="f"></i><i class="f"></i><i></i><i></i></div>
+    <div class="pad">
+      <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+      <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+      <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+      <div class="key ghost"></div><div class="key">0</div>
+      <div class="key ghost"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B7080" stroke-width="2" stroke-linecap="round"><path d="M20 6H9.4L4 12l5.4 6H20a1.4 1.4 0 0 0 1.4-1.4V7.4A1.4 1.4 0 0 0 20 6Z"/><path d="m12.2 10.2 4 4M16.2 10.2l-4 4"/></svg></div>
+    </div>
+    <div style="margin-top:26px;font-size:12px;color:#4F6BFF;font-weight:600">切换手势密码</div>
+  </div>
+  <div class="homebar"></div>
+</div>
+
+<!-- ==================== 06 加密空间 · 内容 ==================== -->
+<div class="screen" id="vaultcontent">
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#12141C"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#12141C"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#12141C"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#9BA0B0"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 10.2 9.9 8.1a2.7 2.7 0 0 0-3.8 0L8 10.2Zm0-4.1c1.5 0 2.9.6 4 1.6l1.4-1.5A8 8 0 0 0 8 3.9a8 8 0 0 0-5.4 2.3l1.4 1.5a5.8 5.8 0 0 1 4-1.6Z" fill="#12141C"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="#12141C" stroke-opacity=".38"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2" fill="#12141C"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4Z" fill="#12141C" fill-opacity=".4"/></svg>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="px row" style="justify-content:space-between;padding:8px 20px 4px">
+      <div>
+        <div class="big-title" style="font-size:29px">加密空间</div>
+        <div style="font-size:11.5px;color:var(--ink3);margin-top:6px">87 个文件 · 已用 3.24 GB</div>
+      </div>
+      <div class="row" style="gap:12px">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#6B7080" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="1.3" fill="#6B7080" stroke="none"/><circle cx="6" cy="12" r="1.3" fill="#6B7080" stroke="none"/><circle cx="18" cy="12" r="1.3" fill="#6B7080" stroke="none"/></svg>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#6B7080" stroke-width="2" stroke-linejoin="round"><rect x="4.6" y="10.4" width="14.8" height="9.4" rx="2.6"/><path d="M8.4 10.4V7.6a3.6 3.6 0 0 1 7.2 0v2.8"/></svg>
+      </div>
+    </div>
+
+    <div class="vault-hint">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4F6BFF" stroke-width="2.1" stroke-linecap="round" style="flex:0 0 auto"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4.6M12 8.4h.01"/></svg>
+      <p class="grow">仅改名换后缀，不复制、不额外占用空间。文件被重命名为 <b>.arv</b> 并移入 <b>.arashi_vault</b>，相册与第三方 App 扫描不到。</p>
+    </div>
+
+    <div class="chips" style="margin-top:14px">
+      <div class="chip on">全部 87</div><div class="chip">图片 52</div><div class="chip">视频 21</div><div class="chip">音频 9</div><div class="chip">文档 5</div>
+    </div>
+
+    <div class="grid3" style="margin-top:16px">
+      <div class="vcell" style="background:linear-gradient(140deg,#3A49D6,#7C5CFF 55%,#24C6DC)"><span class="tag">IMG</span></div>
+      <div class="vcell" style="background:linear-gradient(140deg,#7C5CFF,#FF6B8A)"><span class="tag">IMG</span></div>
+      <div class="vcell" style="background:linear-gradient(140deg,#24C6DC,#5B6BFF)"><span class="tag">IMG</span></div>
+      <div class="vcell" style="background:#151826;flex-direction:column;gap:7px">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8E96B8" stroke-width="1.8"><rect x="2.2" y="4.6" width="19.6" height="14.8" rx="4"/><path d="M10 9.4 15.6 12 10 14.6Z" fill="#fff" stroke="none"/></svg>
+        <span style="font-size:9px;color:#8E96B8">00:48:12</span>
+        <span class="tag">VID</span>
+      </div>
+      <div class="vcell" style="background:linear-gradient(140deg,#FFA53D,#FF6B8A)"><span class="tag">IMG</span></div>
+      <div class="vcell" style="background:#151826;flex-direction:column;gap:7px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#8E96B8"><circle cx="7.2" cy="17.4" r="2.9"/><circle cx="17.6" cy="14.8" r="2.9"/><rect x="9" y="5" width="2" height="12.4"/><rect x="19.4" y="2.4" width="2" height="12.4"/><path d="M9 4.6 21.4 2.4v4.4L9 9Z"/></svg>
+        <span class="tag">AUD</span>
+      </div>
+      <div class="vcell" style="background:linear-gradient(140deg,#3FBF8F,#35D6E8)"><span class="tag">IMG</span></div>
+      <div class="vcell" style="background:linear-gradient(140deg,#5B6BFF,#3FBF8F)"><span class="tag">IMG</span></div>
+      <div class="vcell" style="background:#151826;align-items:center;justify-content:center">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8E96B8" stroke-width="1.7" stroke-linejoin="round"><path d="M6.4 3.4h7.2l4.6 4.6v12.6H6.4Z"/><path d="M13.6 3.4v4.6h4.6"/></svg>
+        <span class="tag">DOC</span>
+      </div>
+      <div class="vcell" style="background:linear-gradient(140deg,#B98CFF,#5B6BFF)"><span class="tag">IMG</span></div>
+      <div class="vcell" style="background:#151826;flex-direction:column;gap:7px">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8E96B8" stroke-width="1.8"><rect x="2.2" y="4.6" width="19.6" height="14.8" rx="4"/><path d="M10 9.4 15.6 12 10 14.6Z" fill="#fff" stroke="none"/></svg>
+        <span style="font-size:9px;color:#8E96B8">01:52:30</span>
+        <span class="tag">VID</span>
+      </div>
+      <div class="vcell" style="background:linear-gradient(140deg,#35D6E8,#7C5CFF)"><span class="tag">IMG</span></div>
+    </div>
+  </div>
+  <div class="fab">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5.4v13.2M5.4 12h13.2"/></svg>
+    添加文件
+  </div>
+  <div class="homebar"></div>
+</div>
+
+<!-- ==================== 07 设置 ==================== -->
+<div class="screen" id="settings">
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#12141C"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#12141C"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#12141C"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#9BA0B0"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 10.2 9.9 8.1a2.7 2.7 0 0 0-3.8 0L8 10.2Zm0-4.1c1.5 0 2.9.6 4 1.6l1.4-1.5A8 8 0 0 0 8 3.9a8 8 0 0 0-5.4 2.3l1.4 1.5a5.8 5.8 0 0 1 4-1.6Z" fill="#12141C"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="#12141C" stroke-opacity=".38"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2" fill="#12141C"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4Z" fill="#12141C" fill-opacity=".4"/></svg>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="px" style="padding:8px 20px 0"><div class="big-title">设置</div></div>
+
+    <div class="sec-title" style="margin-left:20px">外观</div>
+    <div class="group">
+      <div class="srow">
+        <div class="sico" style="background:rgba(79,107,255,.12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6BFF" stroke-width="1.9"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.4M12 19v2.4M4.4 12H2M22 12h-2.4M6.6 6.6 4.9 4.9M19.1 19.1l-1.7-1.7M17.4 6.6l1.7-1.7M4.9 19.1l1.7-1.7"/></svg></div>
+        <div class="grow"><div class="st">主题模式</div><div class="ss">跟随系统</div></div>
+        <div style="font-size:12.5px;color:var(--ink3)">跟随系统</div>
+      </div>
+      <div style="padding-top:2px">
+        <div class="srow" style="padding-bottom:2px">
+          <div class="sico" style="background:rgba(124,92,255,.12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C5CFF" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 3.6a8.4 8.4 0 0 1 0 16.8Z" fill="#7C5CFF" stroke="none"/></svg></div>
+          <div class="grow"><div class="st">主题色</div></div>
+        </div>
+        <div class="dots" style="padding-left:56px">
+          <div class="dot on" style="background:#4F6BFF"></div>
+          <div class="dot" style="background:#7C5CFF"></div>
+          <div class="dot" style="background:#35D6E8"></div>
+          <div class="dot" style="background:#FF6B8A"></div>
+          <div class="dot" style="background:#3FBF8F"></div>
+          <div class="dot" style="background:#FFA53D"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:20px">播放</div>
+    <div class="group">
+      <div class="srow">
+        <div class="sico" style="background:rgba(53,214,232,.14)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22A9BA" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h10M4 12h16M4 17h8"/></svg></div>
+        <div class="grow"><div class="st">自动匹配在线封面与歌词</div><div class="ss">播放时自动补全元数据</div></div>
+        <div class="sw on"><b></b></div>
+      </div>
+      <div class="srow">
+        <div class="sico" style="background:rgba(79,107,255,.12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6BFF" stroke-width="1.9" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3.4"/><rect x="9" y="9" width="6" height="6" rx="1.4" fill="#4F6BFF" stroke="none"/></svg></div>
+        <div class="grow"><div class="st">解码方式</div></div>
+        <div style="font-size:12.5px;color:var(--ink3)">硬件解码</div>
+      </div>
+      <div class="srow">
+        <div class="sico" style="background:rgba(255,107,138,.13)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E85A79" stroke-width="1.9" stroke-linecap="round"><path d="M9 12.4V5.6a1.6 1.6 0 1 1 3.2 0v6.2"/><path d="M12.2 11.4V4.6a1.6 1.6 0 1 1 3.2 0v7"/><path d="M15.4 12V7.2a1.6 1.6 0 1 1 3.2 0v7.4a6.4 6.4 0 0 1-6.4 6.4h-1a5.6 5.6 0 0 1-5.6-5.6v-3.2"/></svg></div>
+        <div class="grow"><div class="st">手势控制</div><div class="ss">亮度、音量、快进、缩放</div></div>
+        <div class="sw on"><b></b></div>
+      </div>
+      <div class="srow">
+        <div class="sico" style="background:rgba(63,191,143,.13)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2FA377" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4V12l3.4 2.2"/></svg></div>
+        <div class="grow"><div class="st">记忆播放位置</div></div>
+        <div class="sw on"><b></b></div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:20px">安全 · 加密空间</div>
+    <div class="group">
+      <div class="srow">
+        <div class="sico" style="background:rgba(124,92,255,.13)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C5CFF" stroke-width="1.9" stroke-linejoin="round"><rect x="4" y="10.4" width="16" height="10" rx="2.6"/><path d="M8 10.4V7.6a4 4 0 0 1 8 0v2.8"/></svg></div>
+        <div class="grow"><div class="st">加密空间</div><div class="ss">已加密 87 个文件 · 3.24 GB</div></div>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.4 5.6 6.4 6.4-6.4 6.4"/></svg>
+      </div>
+      <div class="srow">
+        <div class="sico" style="background:rgba(79,107,255,.12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6BFF" stroke-width="1.9" stroke-linecap="round"><circle cx="8.4" cy="8.4" r="4.4"/><path d="M11.6 11.6 19 19M16.6 16.6l-1.8 1.8M18.4 14.8l-1.8 1.8"/></svg></div>
+        <div class="grow"><div class="st">解锁方式</div></div>
+        <div style="font-size:12.5px;color:var(--ink3)">数字密码</div>
+      </div>
+      <div class="srow">
+        <div class="sico" style="background:rgba(155,160,176,.14)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C8296" stroke-width="1.9" stroke-linecap="round"><path d="M2.6 12S6.4 5.4 12 5.4 21.4 12 21.4 12 17.6 18.6 12 18.6 2.6 12 2.6 12Z"/><circle cx="12" cy="12" r="2.8"/></svg></div>
+        <div class="grow"><div class="st">隐藏加密文件缩略图</div></div>
+        <div class="sw on"><b></b></div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:20px">关于</div>
+    <div class="group" style="margin-bottom:34px">
+      <div class="srow">
+        <div class="sico" style="background:rgba(255,36,66,.10)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF2442" stroke-width="1.9" stroke-linecap="round"><path d="M20.6 11.6c0 4-4.8 7.6-8.6 9.4-3.8-1.8-8.6-5.4-8.6-9.4a4.6 4.6 0 0 1 8.6-2.4 4.6 4.6 0 0 1 8.6 2.4Z"/></svg></div>
+        <div class="grow"><div class="st">联系作者</div><div class="ss">小红书 @琪琪</div></div>
+        <div class="xhs">小红书</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.4 5.6 6.4 6.4-6.4 6.4"/></svg>
+      </div>
+      <div class="srow">
+        <div class="sico" style="background:rgba(255,107,138,.12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#FF6B8A"><path d="M12 20.4 4.6 13.3a4.7 4.7 0 0 1 6.6-6.7l.8.8.8-.8a4.7 4.7 0 0 1 6.6 6.7Z"/></svg></div>
+        <div class="grow"><div class="st">赞赏作者</div><div class="ss">请我喝一杯咖啡</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.4 5.6 6.4 6.4-6.4 6.4"/></svg>
+      </div>
+      <div class="srow">
+        <div class="sico" style="background:rgba(155,160,176,.14)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C8296" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 11v5.4M12 7.8h.01"/></svg></div>
+        <div class="grow"><div class="st">版本</div></div>
+        <div style="font-size:12.5px;color:var(--ink3)">1.0.0</div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--ink3);padding-bottom:40px">岚播放器 · ArashiPlayer</div>
+  </div>
+  <div class="homebar"></div>
+</div>
+
+<!-- ==================== 08 联系作者 ==================== -->
+<div class="screen" id="author">
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#12141C"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#12141C"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#12141C"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#9BA0B0"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 10.2 9.9 8.1a2.7 2.7 0 0 0-3.8 0L8 10.2Zm0-4.1c1.5 0 2.9.6 4 1.6l1.4-1.5A8 8 0 0 0 8 3.9a8 8 0 0 0-5.4 2.3l1.4 1.5a5.8 5.8 0 0 1 4-1.6Z" fill="#12141C"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="#12141C" stroke-opacity=".38"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2" fill="#12141C"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4Z" fill="#12141C" fill-opacity=".4"/></svg>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:4px">
+    <div class="row" style="gap:12px;padding:6px 20px 0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#12141C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 5.6 8.2 12l6.4 6.4"/></svg>
+      <div style="font-size:17px;font-weight:700">联系作者</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;align-items:center;margin-top:44px">
+      <div style="width:78px;height:78px;border-radius:22px;background:#FF2442;color:#fff;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:800;box-shadow:0 16px 36px rgba(255,36,66,.32)">小红书</div>
+      <div style="font-size:19px;font-weight:800;margin-top:18px;letter-spacing:-.3px">琪琪</div>
+      <div style="font-size:12.5px;color:var(--ink3);margin-top:7px">在小红书分享播放器的日常</div>
+    </div>
+
+    <div class="qr-card" style="margin-top:30px;padding:15px 16px">
+      <div class="row" style="gap:12px">
+        <div class="xhs" style="width:34px;height:34px;border-radius:11px;font-size:10px;flex:0 0 auto">小红书</div>
+        <div class="grow">
+          <div style="font-size:14.5px;font-weight:650">我的小红书主页</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:4px" class="ell">xiaohongshu.com/user/profile/65d47c96…</div>
+        </div>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.4 5.6 6.4 6.4-6.4 6.4"/></svg>
+      </div>
+    </div>
+
+    <div style="padding:26px 34px 0;font-size:12.5px;line-height:1.72;color:var(--ink2);text-align:center">
+      使用中遇到问题、想要新功能，欢迎来小红书找我。<br>你的每一条建议，我都会认真看。
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-top:30px">
+      <div style="height:48px;padding:0 40px;border-radius:26px;background:var(--grad);color:#fff;display:flex;align-items:center;font-size:15px;font-weight:700;box-shadow:0 14px 34px rgba(255,36,66,.26)">打开小红书主页</div>
+    </div>
+
+    <div class="sec-title" style="margin-left:20px">可以在小红书找我聊这些</div>
+    <div class="group" style="margin:0 20px 20px">
+      <div class="srow">
+        <div class="sico" style="background:rgba(255,36,66,.10)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF2442" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 12.6c0 4-3.9 7.2-8.6 7.2a10 10 0 0 1-2.9-.4L4.4 21l1.3-3.6a6.8 6.8 0 0 1-2.3-4.8C3.4 8.6 7.3 5.4 12 5.4s8.6 3.2 8.6 7.2Z"/></svg>
+        </div>
+        <div class="grow"><div class="st">问题反馈</div><div class="ss">描述遇到的问题，附上机型和系统版本</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.4 5.6 6.4 6.4-6.4 6.4"/></svg>
+      </div>
+      <div class="srow">
+        <div class="sico" style="background:rgba(79,107,255,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6BFF" stroke-width="1.9" stroke-linecap="round"><path d="M12 3.4a5.6 5.6 0 0 1 3.4 10.1v3.1H8.6v-3.1A5.6 5.6 0 0 1 12 3.4Z"/><path d="M9.6 19.4h4.8M10.4 21.4h3.2"/></svg>
+        </div>
+        <div class="grow"><div class="st">功能建议</div><div class="ss">想要的播放能力，直接告诉我</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3C7D2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.4 5.6 6.4 6.4-6.4 6.4"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="homebar"></div>
+</div>
+
+<!-- ==================== 09 赞赏作者 ==================== -->
+<div class="screen" id="reward">
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#12141C"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#12141C"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#12141C"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#9BA0B0"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 10.2 9.9 8.1a2.7 2.7 0 0 0-3.8 0L8 10.2Zm0-4.1c1.5 0 2.9.6 4 1.6l1.4-1.5A8 8 0 0 0 8 3.9a8 8 0 0 0-5.4 2.3l1.4 1.5a5.8 5.8 0 0 1 4-1.6Z" fill="#12141C"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="#12141C" stroke-opacity=".38"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="2" fill="#12141C"/><path d="M23 4v4a2.2 2.2 0 0 0 0-4Z" fill="#12141C" fill-opacity=".4"/></svg>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="row" style="gap:12px;padding:6px 20px 0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#12141C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 5.6 8.2 12l6.4 6.4"/></svg>
+      <div style="font-size:17px;font-weight:700">赞赏作者</div>
+    </div>
+
+    <div style="text-align:center;padding:24px 40px 2px">
+      <div style="font-size:22px;font-weight:800;letter-spacing:-.6px" class="grad-text">您的支持是我坚持的动力</div>
+      <div style="font-size:11.5px;color:var(--ink3);margin-top:11px">如果岚播放器帮到了你，可以请我喝一杯咖啡</div>
+    </div>
+
+    <div class="qr-card" style="margin-top:22px">
+      <div class="qr-head">
+        <div>
+          <div class="t">支付宝</div>
+          <div class="s">打开支付宝扫一扫</div>
+        </div>
+        <div class="save">保存到相册</div>
+      </div>
+      <img class="qr-img" src="assets/alipay.jpg" alt="支付宝收款码" style="height:216px;width:100%;object-fit:contain">
+    </div>
+
+    <div class="qr-card" style="margin-top:12px;margin-bottom:18px">
+      <div class="qr-head">
+        <div>
+          <div class="t">微信赞赏码</div>
+          <div class="s">长按识别或扫码赞赏</div>
+        </div>
+        <div class="save" style="background:rgba(63,191,143,.94)">保存到相册</div>
+      </div>
+      <img class="qr-img sq" src="assets/wechat.png" alt="微信赞赏码" style="height:182px;width:182px;object-fit:contain;margin:0 auto;display:block">
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:var(--ink3);padding-bottom:22px">感谢每一位愿意支持独立开发的人</div>
+  </div>
+  <div class="homebar"></div>
+</div>
+
+<script>
+  var ids = ["icon","home","music","playing","video","vault","vaultcontent","settings","author","reward"];
+  function show(){
+    var h = (location.hash || "#home").slice(1);
+    if (ids.indexOf(h) < 0) h = "home";
+    ids.forEach(function(i){
+      var el = document.getElementById(i);
+      el.classList.toggle("on", i === h);
+    });
+  }
+  window.addEventListener("hashchange", show);
+  show();
+</script>
+</body>
+</html>

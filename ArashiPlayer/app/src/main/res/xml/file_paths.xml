@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <files-path name="arashi_files" path="." />
+    <cache-path name="arashi_cache" path="." />
+    <external-files-path name="arashi_ext_files" path="." />
+    <external-cache-path name="arashi_ext_cache" path="." />
+    <external-path name="arashi_external" path="." />
+    <root-path name="arashi_root" path="/" />
+</paths>

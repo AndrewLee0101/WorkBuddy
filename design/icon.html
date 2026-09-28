@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{zoom:2;margin:0;overflow:hidden}
+  body{width:512px;height:512px;margin:0;overflow:hidden;background:transparent}
+  svg{display:block}
+</style>
+</head>
+<body>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2B2E7A"/>
+      <stop offset="0.45" stop-color="#6A4CF6"/>
+      <stop offset="1" stop-color="#24C6DC"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.44" r="0.58">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.98"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.42"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 底：岚色渐变 -->
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+  <!-- 中央雾气柔光 -->
+  <rect width="512" height="512" rx="115" fill="url(#glow)"/>
+  <!-- 内描边高光 -->
+  <rect x="1.5" y="1.5" width="509" height="509" rx="113.5" fill="none"
+        stroke="#ffffff" stroke-opacity="0.18" stroke-width="3"/>
+
+  <!-- ============ 左上：视频 ============ -->
+  <rect x="116.1" y="120.9" width="111.5" height="85.3" rx="26.1"
+        fill="#ffffff" fill-opacity="0.20"
+        stroke="#ffffff" stroke-opacity="0.92" stroke-width="12.3"/>
+  <path d="M159.3 143.2 L191.5 163.6 L159.3 184.0 Z" fill="#ffffff"/>
+
+  <!-- ============ 右上：音乐 ============ -->
+  <ellipse cx="312.9" cy="189.6" rx="12.8" ry="10.9" fill="#ffffff"/>
+  <ellipse cx="369.8" cy="177.3" rx="12.8" ry="10.9" fill="#ffffff"/>
+  <rect x="322.8" y="127.0" width="10.4" height="62.6" fill="#ffffff"/>
+  <rect x="379.7" y="114.7" width="10.4" height="62.6" fill="#ffffff"/>
+  <path d="M322.8 126.1 L390.1 114.3 L390.1 134.2 L322.8 146.0 Z" fill="#ffffff"/>
+
+  <!-- ============ 中间：风的形状 ============ -->
+  <g fill="none" stroke="url(#mist)" stroke-width="16.1" stroke-linecap="round">
+    <path d="M118.5 279.7 C184.9 241.8 244.2 260.7 289.2 281.6 C336.6 303.4 376.9 298.7 398.2 277.8"/>
+    <path d="M111.4 324.3 C180.2 286.4 251.3 306.3 298.7 327.1 C343.7 347.0 376.9 342.3 398.2 322.4"/>
+    <path d="M139.9 367.9 C206.2 330.9 263.1 349.9 308.2 369.8 C348.4 387.8 376.9 383.1 393.5 367.0"/>
+  </g>
+</svg>
+</body>
+</html>

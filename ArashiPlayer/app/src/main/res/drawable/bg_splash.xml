@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 启动闪屏背景：岚色渐变 + 中央风痕 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="315"
+                android:startColor="#2B2E7A"
+                android:centerColor="#6A4CF6"
+                android:endColor="#24C6DC"
+                android:type="linear" />
+        </shape>
+    </item>
+    <item android:gravity="center">
+        <bitmap android:src="@drawable/ic_launcher_foreground" android:gravity="center" />
+    </item>
+</layer-list>

@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>岚播放器 · 播放器原型</title>
+<style>
+  :root{
+    --ink:#12141C; --ink2:#6B7080; --ink3:#9BA0B0;
+    --divider:rgba(0,0,0,.055);
+    --grad:linear-gradient(90deg,#5B6BFF,#7C5CFF 52%,#35D6E8);
+    --blue:#4F6BFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+  /* 用 zoom:2 渲染 2 倍图：#player 852x393、#subsheet 393x852 */
+  html{zoom:2;margin:0;overflow:hidden}
+  body{
+    width:852px;height:852px;margin:0;overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+    background:#000;color:#fff;
+  }
+  .screen{position:absolute;left:0;top:0;display:none;flex-direction:column;overflow:hidden}
+  #player{width:852px;height:393px}
+  #subsheet{width:393px;height:852px}
+  .screen.on{display:flex}
+  .row{display:flex;align-items:center}
+  .grow{flex:1;min-width:0}
+  .ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ================= 横屏播放器 ================= */
+  #player{background:#000}
+  .scene{position:absolute;inset:0;background:
+      radial-gradient(120% 90% at 22% 18%,#2A4A7E 0%,#16305C 34%,#0B1730 68%,#05080F 100%);
+    overflow:hidden}
+  .scene::before{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;
+    background:linear-gradient(to top,#05080F,rgba(5,8,15,.42) 55%,rgba(5,8,15,0));}
+  .scene .moon{position:absolute;left:16%;top:14%;width:74px;height:74px;border-radius:50%;
+    background:radial-gradient(circle,#FFF6D8,#FFE9A8 62%,rgba(255,233,168,0));filter:blur(1px);opacity:.9}
+  .scene .sea{position:absolute;left:0;right:0;bottom:0;height:38%;
+    background:linear-gradient(to bottom,rgba(32,64,116,.62),rgba(6,10,20,.9));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+  .scene .ripple{position:absolute;left:0;right:0;bottom:26%;height:1.5px;background:rgba(255,255,255,.14)}
+  .scene .ripple.b{left:12%;right:8%;bottom:19%;opacity:.5}
+  .scene .ripple.c{left:22%;right:26%;bottom:12%;opacity:.28}
+  .grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;
+    background-image:radial-gradient(rgba(255,255,255,.7) 1px,transparent 1px);
+    background-size:3px 3px}
+  .vig{position:absolute;inset:0;box-shadow:inset 0 0 190px 60px rgba(0,0,0,.62)}
+
+  .pbar{position:absolute;left:0;right:0;background:linear-gradient(to bottom,rgba(0,0,0,.72),rgba(0,0,0,0));
+    padding:14px 22px 26px;display:flex;align-items:center;gap:16px;z-index:6}
+  .pbar.top{top:0}
+  .pbar.bottom{bottom:0;background:linear-gradient(to top,rgba(0,0,0,.86),rgba(0,0,0,0));padding:30px 22px 14px;flex-direction:column;align-items:stretch;gap:0}
+  .ptitle{font-size:15px;font-weight:650;letter-spacing:-.2px}
+  .pmeta{display:flex;gap:7px;margin-top:6px}
+  .mtag{font-size:9.5px;font-weight:600;padding:2.5px 8px;border-radius:6px;
+    background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.14);letter-spacing:.2px}
+  .mtag.hl{background:rgba(91,107,255,.32);border-color:rgba(122,140,255,.5)}
+  .icn{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.11);flex:0 0 auto}
+
+  .center-ctrl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    display:flex;align-items:center;gap:58px;z-index:5}
+  .cc{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.94}
+  .cc span{font-size:9.5px;color:rgba(255,255,255,.62);letter-spacing:.2px}
+  .playbtn{width:74px;height:74px;border-radius:50%;background:rgba(255,255,255,.94);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 12px 36px rgba(0,0,0,.55)}
+
+  .progress-wrap{display:flex;align-items:center;gap:13px;margin-bottom:12px}
+  .ptime{font-size:11.5px;color:rgba(255,255,255,.78);font-variant-numeric:tabular-nums;font-weight:600}
+  .ptrack{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.20);position:relative}
+  .ptrack i{position:absolute;left:0;top:0;bottom:0;width:34%;border-radius:3px;background:var(--grad)}
+  .ptrack b{position:absolute;left:34%;top:50%;width:15px;height:15px;border-radius:50%;background:#fff;
+    transform:translate(-50%,-50%);box-shadow:0 2px 10px rgba(0,0,0,.6)}
+  .ptrack .buf{position:absolute;left:0;top:0;bottom:0;width:48%;border-radius:3px;background:rgba(255,255,255,.14)}
+  .ptrack .bbl{position:absolute;left:34%;bottom:18px;transform:translateX(-50%);
+    background:rgba(14,16,26,.92);border:1px solid rgba(255,255,255,.12);
+    font-size:10.5px;font-weight:650;padding:3px 9px;border-radius:8px;white-space:nowrap}
+
+  .toolrow{display:flex;align-items:center;justify-content:space-between}
+  .tool{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.86}
+  .tool span{font-size:9.5px;letter-spacing:.2px;color:rgba(255,255,255,.72)}
+  .tool.on{opacity:1}
+  .tool.on span{color:#7E8DFF;font-weight:700}
+
+  .subline{position:absolute;left:9%;right:9%;bottom:120px;text-align:center;z-index:5}
+  .subline p{display:inline-block;font-size:21px;font-weight:700;line-height:1.42;
+    color:#fff;letter-spacing:.3px;
+    text-shadow:-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000,0 2px 8px rgba(0,0,0,.8)}
+  .subline .tr{display:block;font-size:14px;font-weight:500;color:rgba(255,255,255,.70);margin-top:5px}
+
+  .volhud{position:absolute;right:42px;top:50%;transform:translateY(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:10px;z-index:8}
+  .volhud .bar{width:5px;height:118px;border-radius:3px;background:rgba(255,255,255,.22);
+    position:relative;overflow:hidden}
+  .volhud .bar i{position:absolute;left:0;right:0;bottom:0;height:68%;background:#fff;border-radius:3px}
+  .volhud span{font-size:10px;font-weight:700;color:rgba(255,255,255,.85)}
+
+  /* ================= 竖向字幕面板 ================= */
+  #subsheet{background:rgba(6,8,14,.55);align-items:center}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#F4F5F9;color:var(--ink);
+    border-radius:26px 26px 0 0;padding:8px 0 16px;max-height:100%;overflow:hidden;
+    box-shadow:0 -18px 50px rgba(0,0,0,.4)}
+  .sheet .handle{width:38px;height:5px;border-radius:3px;background:rgba(0,0,0,.16);margin:0 auto 12px}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:0 20px 14px}
+  .sheet-head .t{font-size:17px;font-weight:750;letter-spacing:-.3px}
+  .sheet-head .x{width:28px;height:28px;border-radius:50%;background:rgba(120,126,150,.14);
+    display:flex;align-items:center;justify-content:center}
+  .lbl{font-size:11.5px;font-weight:650;color:var(--ink3);margin:11px 20px 7px;letter-spacing:.3px}
+  .chips{display:flex;gap:8px;padding:0 20px;overflow:hidden}
+  .chip{flex:0 0 auto;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;
+    background:rgba(120,126,150,.12);color:var(--ink2)}
+  .chip.on{background:linear-gradient(135deg,#5B6BFF,#7C5CFF);color:#fff;box-shadow:0 6px 16px rgba(91,107,255,.32)}
+
+  .preview{margin:0 20px;height:96px;border-radius:16px;background:#0A0C14;position:relative;
+    overflow:hidden;box-shadow:0 10px 26px rgba(18,20,44,.18)}
+  .preview::after{content:"";position:absolute;inset:0;background:
+      radial-gradient(110% 90% at 20% 16%,#22375F 0%,#101C36 42%,#06090F 100%);opacity:.9}
+  .preview .s{position:absolute;left:8%;right:8%;bottom:13px;text-align:center;z-index:2}
+  .preview .s span{font-size:16px;font-weight:700;color:#fff;
+    text-shadow:-1.4px -1.4px 0 #000,1.4px -1.4px 0 #000,-1.4px 1.4px 0 #000,1.4px 1.4px 0 #000}
+  .preview .tagline{position:absolute;left:10px;top:9px;font-size:9px;color:rgba(255,255,255,.5);
+    border:1px solid rgba(255,255,255,.18);padding:2px 7px;border-radius:5px;z-index:2}
+
+  .colors{display:flex;gap:11px;padding:0 20px;flex-wrap:wrap}
+  .cd{width:27px;height:27px;border-radius:50%;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.14)}
+  .cd.on::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(91,107,255,.6)}
+
+  .slider{padding:0 20px}
+  .slider .sr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .slider .sr .v{font-size:11.5px;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums}
+  .track{height:5px;border-radius:3px;background:rgba(120,126,150,.20);position:relative}
+  .track i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,#5B6BFF,#7C5CFF)}
+  .track b{position:absolute;top:50%;width:20px;height:20px;border-radius:50%;background:#fff;
+    transform:translate(-50%,-50%);box-shadow:0 2px 7px rgba(18,20,44,.28);border:.5px solid rgba(0,0,0,.04)}
+
+  .segd{display:flex;gap:4px;background:rgba(120,126,150,.11);border-radius:13px;padding:3px;margin:0 20px}
+  .segd div{flex:1;text-align:center;font-size:12.5px;font-weight:600;color:var(--ink2);padding:7px 0;border-radius:10px}
+  .segd div.on{background:#fff;color:var(--ink);box-shadow:0 2px 7px rgba(18,20,44,.11)}
+
+  .swrow{display:flex;align-items:center;justify-content:space-between;margin:0 20px;
+    background:#fff;border-radius:14px;padding:12px 15px;border:.5px solid var(--divider);box-shadow:0 4px 14px rgba(18,20,44,.05)}
+  .sw{width:44px;height:26px;border-radius:14px;background:#D8DBE5;position:relative}
+  .sw.on{background:linear-gradient(135deg,#5B6BFF,#7C5CFF)}
+  .sw b{position:absolute;top:2.5px;left:2.5px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  .sw.on b{left:20.5px}
+
+  .btns{display:flex;gap:11px;padding:14px 20px 0}
+  .btn{flex:1;height:47px;border-radius:24px;display:flex;align-items:center;justify-content:center;
+    font-size:14.5px;font-weight:700;gap:8px}
+  .btn.primary{background:linear-gradient(135deg,#5B6BFF,#7C5CFF);color:#fff;box-shadow:0 12px 28px rgba(91,107,255,.34)}
+  .btn.ghost{background:rgba(120,126,150,.13);color:var(--ink2)}
+</style>
+</head>
+<body>
+
+<!-- ==================== 横屏视频播放器 ==================== -->
+<div class="screen on" id="player">
+  <div class="scene">
+    <div class="moon"></div>
+    <div class="sea"></div>
+    <div class="ripple"></div><div class="ripple b"></div><div class="ripple c"></div>
+  </div>
+  <div class="grain"></div>
+  <div class="vig"></div>
+
+  <!-- 顶部 -->
+  <div class="pbar top">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 5.6 8.2 12l6.4 6.4"/></svg>
+    <div class="grow" style="margin-left:4px">
+      <div class="ptitle ell">海上钢琴师 The Legend of 1900</div>
+      <div class="pmeta">
+        <span class="mtag hl">1080P</span>
+        <span class="mtag">硬解</span>
+        <span class="mtag">1.0x</span>
+        <span class="mtag">外挂字幕 · SRT</span>
+        <span class="mtag">MKV</span>
+      </div>
+    </div>
+    <div class="icn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.6V8a4.6 4.6 0 0 1 4.6-4.6h1.4M14.6 3.4H16A4.6 4.6 0 0 1 20.6 8v.6M20.6 15.4V16a4.6 4.6 0 0 1-4.6 4.6h-1.4M9.4 20.6H8A4.6 4.6 0 0 1 3.4 16v-.6"/></svg></div>
+    <div class="icn" style="margin-left:9px"><svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="5.4" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="18.6" r="1.9"/></svg></div>
+  </div>
+
+  <!-- 字幕 -->
+  <div class="subline">
+    <p>我们笑着说再见，却深知再见遥遥无期。
+      <span class="tr">We laughed and kept saying "see u soon".</span>
+    </p>
+  </div>
+
+  <!-- 中央控制 -->
+  <div class="center-ctrl">
+    <div class="cc">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5.6a6.9 6.9 0 1 1-6.7 5.1" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
+        <path d="M4.6 5.2v5.4h5.4" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="12.6" y="15.4" font-size="7.4" font-weight="700" fill="#fff" text-anchor="middle" font-family="Arial,Helvetica,sans-serif">15</text>
+      </svg>
+      <span>后退 15 秒</span>
+    </div>
+    <div class="playbtn">
+      <svg width="27" height="27" viewBox="0 0 24 24" fill="#0A0B12"><rect x="7" y="5" width="3.6" height="14" rx="1.8"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.8"/></svg>
+    </div>
+    <div class="cc">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5.6a6.9 6.9 0 1 0 6.7 5.1" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
+        <path d="M19.4 5.2v5.4h-5.4" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="11.4" y="15.4" font-size="7.4" font-weight="700" fill="#fff" text-anchor="middle" font-family="Arial,Helvetica,sans-serif">30</text>
+      </svg>
+      <span>快进 30 秒</span>
+    </div>
+  </div>
+
+  <!-- 右侧音量手势反馈 -->
+  <div class="volhud">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.6 9H3.4v6h3.2L11 19Z"/><path d="M15.4 9.4a3.6 3.6 0 0 1 0 5.2"/><path d="M18 7a7 7 0 0 1 0 10"/></svg>
+    <div class="bar"><i></i></div>
+    <span>68%</span>
+  </div>
+
+  <!-- 底部 -->
+  <div class="pbar bottom">
+    <div class="progress-wrap">
+      <span class="ptime">48:12</span>
+      <div class="ptrack">
+        <span class="buf"></span>
+        <i></i><b></b>
+        <div class="bbl">1:24:06 / 2:49:30</div>
+      </div>
+      <span class="ptime">2:49:30</span>
+    </div>
+    <div class="toolrow">
+      <div class="tool">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 18.4a9 9 0 1 1 15.6 0"/><path d="M12 15.4 16.8 10"/><circle cx="12" cy="16" r="1.6" fill="#fff" stroke="none"/></svg>
+        <span>倍速 1.0x</span>
+      </div>
+      <div class="tool on">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7E8DFF" stroke-width="1.9" stroke-linecap="round"><rect x="2.6" y="4.6" width="18.8" height="14.8" rx="3.6"/><path d="M6 9.4h8M6 14.6h12" stroke="#7E8DFF"/></svg>
+        <span>字幕</span>
+      </div>
+      <div class="tool">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h10M4 12h16M4 17h10"/></svg>
+        <span>音轨 2/3</span>
+      </div>
+      <div class="tool">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9"><rect x="2.6" y="5" width="18.8" height="14" rx="3.4"/><path d="M2.6 9.4h18.8M2.6 14.6h18.8"/></svg>
+        <span>画面比例</span>
+      </div>
+      <div class="tool">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linejoin="round"><rect x="5" y="10.6" width="14" height="9" rx="2.4"/><path d="M8.4 10.6V8a3.6 3.6 0 0 1 7.2 0v2.6"/></svg>
+        <span>锁屏</span>
+      </div>
+      <div class="tool">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"><path d="M20.4 12a8.4 8.4 0 1 1-2.6-6"/><path d="M20.6 2.6v4.8h-4.8"/></svg>
+        <span>旋转</span>
+      </div>
+      <div class="tool">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.4h3.2l1.8-2.4h8l1.8 2.4h2.4v10H3.4Z"/><circle cx="12" cy="13.2" r="3"/></svg>
+        <span>截图</span>
+      </div>
+      <div class="tool">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8.4 5.4h7.2v13.2H8.4Z"/><path d="M4.6 8.4v7.2M19.4 8.4v7.2"/></svg>
+        <span>全屏</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 字幕样式面板 ==================== -->
+<div class="screen" id="subsheet">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-head">
+      <div class="t">字幕样式</div>
+      <div class="x"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7080" stroke-width="2.6" stroke-linecap="round"><path d="M6.6 6.6 17.4 17.4M17.4 6.6 6.6 17.4"/></svg></div>
+    </div>
+
+    <div class="lbl" style="margin-top:0">样式预设</div>
+    <div class="chips">
+      <div class="chip on">标准</div>
+      <div class="chip">影院描边</div>
+      <div class="chip">柔和半透</div>
+      <div class="chip">黄色高亮</div>
+      <div class="chip">背景条</div>
+    </div>
+
+    <div class="lbl">实时预览</div>
+    <div class="preview">
+      <div class="tagline">所见即所得</div>
+      <div class="s"><span>我们笑着说再见，却深知再见遥遥无期。</span></div>
+    </div>
+
+    <div class="lbl">文字颜色</div>
+    <div class="colors">
+      <div class="cd on" style="background:#fff"></div>
+      <div class="cd" style="background:#FFF3B0"></div>
+      <div class="cd" style="background:#FFD24D"></div>
+      <div class="cd" style="background:#FFA53D"></div>
+      <div class="cd" style="background:#FF6B8A"></div>
+      <div class="cd" style="background:#B98CFF"></div>
+      <div class="cd" style="background:#35D6E8"></div>
+      <div class="cd" style="background:#C9CDD8"></div>
+      <div class="cd" style="background:#111318"></div>
+    </div>
+
+    <div class="lbl">透明度</div>
+    <div class="slider">
+      <div class="sr"><span style="font-size:11.5px;color:#9BA0B0">文字不透明度</span><span class="v">100%</span></div>
+      <div class="track"><i style="width:100%"></i><b style="left:100%"></b></div>
+    </div>
+
+    <div class="lbl">大小</div>
+    <div class="slider">
+      <div class="sr"><span style="font-size:11.5px;color:#9BA0B0">字号</span><span class="v">20 sp</span></div>
+      <div class="track"><i style="width:38%"></i><b style="left:38%"></b></div>
+    </div>
+
+    <div class="lbl">位置</div>
+    <div class="slider">
+      <div class="sr"><span style="font-size:11.5px;color:#9BA0B0">距底部</span><span class="v">6%</span></div>
+      <div class="track"><i style="width:22%"></i><b style="left:22%"></b></div>
+    </div>
+
+    <div class="lbl">描边效果</div>
+    <div class="segd"><div class="on">外描边</div><div>投影</div><div>背景框</div><div>无</div></div>
+
+    <div class="lbl">时间轴偏移</div>
+    <div class="slider">
+      <div class="sr"><span style="font-size:11.5px;color:#9BA0B0">字幕整体提前 / 延后</span><span class="v">+0.0 s</span></div>
+      <div class="track"><i style="width:50%"></i><b style="left:50%"></b></div>
+    </div>
+
+    <div class="lbl">文字加粗</div>
+    <div class="swrow">
+      <span style="font-size:14.5px;font-weight:600">加粗显示</span>
+      <div class="sw on"><b></b></div>
+    </div>
+
+    <div class="btns">
+      <div class="btn primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"><path d="M12 5.4v13.2M5.4 12h13.2"/></svg>
+        添加外挂字幕
+      </div>
+      <div class="btn ghost" style="flex:0 0 108px">恢复默认</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var ids = ["player","subsheet"];
+  function show(){
+    var h = (location.hash || "#player").slice(1);
+    if (ids.indexOf(h) < 0) h = "player";
+    ids.forEach(function(i){ document.getElementById(i).classList.toggle("on", i === h); });
+  }
+  window.addEventListener("hashchange", show); show();
+</script>
+</body>
+</html>

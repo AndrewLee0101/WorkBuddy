@@ -1,0 +1,46 @@
+# ===== Gradle / Android 构建产物 =====
+.gradle/
+build/
+*/build/
+app/build/
+ArashiPlayer/.gradle/
+ArashiPlayer/build/
+ArashiPlayer/app/build/
+ArashiPlayer/app/release/
+ArashiPlayer/app/debug/
+captures/
+.cxx/
+*.hprof
+release/
+
+# 本机路径配置，不应入库
+local.properties
+ArashiPlayer/local.properties
+
+# 签名密钥（切勿外泄）
+*.jks
+*.keystore
+keystore.properties
+ArashiPlayer/keystore.properties
+
+# ===== IDE =====
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+out/
+
+# ===== 系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 临时 =====
+*.log
+*.tmp
+*.bak
+*~
+
+# ===== 本地构建工具链（JDK / Android SDK / Gradle，体积大，不入库）=====
+.buildtoolchain/
